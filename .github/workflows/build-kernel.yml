@@ -14,7 +14,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y bc build-essential libelf-dev bison flex libssl-dev libcrypto++-dev git curl openssl
 
-        - name: Download Google Clang Toolchain
+    - name: Download Google Clang Toolchain
       run: |
         mkdir -p $GITHUB_WORKSPACE/clang
         cd $GITHUB_WORKSPACE/clang
