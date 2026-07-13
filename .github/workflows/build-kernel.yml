@@ -17,7 +17,7 @@ jobs:
     - name: Clone Proton Clang Toolchain
       run: |
         # Клонируем стабильный и оптимизированный под Android компилятор Clang 14 с GitHub
-        git clone --depth=1 https://github.com $GITHUB_WORKSPACE/clang
+        git clone --depth=1 https://github.com/kdrag0n/proton-clang $GITHUB_WORKSPACE/clang
 
     - name: Integrate RTL88x2BU Driver
       run: |
@@ -34,6 +34,31 @@ jobs:
       run: |
         export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
         export ARCH=arm64
+        export SUBARCH=arm64
+        export CROSS_COMPILE=aarch64-linux-gnu-
+        export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+        
+        make O=out spes-perf_defconfig
+        
+        make -j$(nproc --all) O=out \
+          CC=clang \
+          CLANG_TRIPLE=aarch64-linux-gnu- \
+          CROSS_COMPILE=aarch64-linux-gnu- \
+          CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+
+    - name: Package with AnyKernel3
+      run: |
+        git clone https://github.com $GITHUB_WORKSPACE/AnyKernel3
+        cp out/arch/arm64/boot/Image.gz $GITHUB_WORKSPACE/AnyKernel3/
+        cd $GITHUB_WORKSPACE/AnyKernel3
+        sed -i 's/do.devicecheck=1/do.devicecheck=0/g' anykernel.sh
+        zip -r9 $GITHUB_WORKSPACE/NetHunter-Kernel-Spes.zip *
+
+    - name: Upload Kernel Artifact
+      uses: actions/upload-artifact@v4
+      with:
+    - name: NetHunter-Kernel-RTL88x2BU
+     path: NetHunter-Kernel-Spes.zip
         export SUBARCH=arm64
         export CROSS_COMPILE=aarch64-linux-gnu-
         export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
