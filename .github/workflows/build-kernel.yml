@@ -14,14 +14,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y bc build-essential libelf-dev bison flex libssl-dev libcrypto++-dev git curl openssl
 
-    - name: Download Google Clang Toolchain
+        - name: Download Google Clang Toolchain
       run: |
         mkdir -p $GITHUB_WORKSPACE/clang
         cd $GITHUB_WORKSPACE/clang
-        # Скачиваем стабильный компилятор Google Clang
-        curl -LO https://googlesource.com
-        tar -xf clang-r487747c.tar.gz
-        rm clang-r487747c.tar.gz
+        # Скачиваем проверенную и стабильную версию Clang r450784d
+        wget https://googlesource.com
+        tar -xf clang-r450784d.tar.gz
+        rm clang-r450784d.tar.gz
+        
 
     - name: Integrate RTL88x2BU Driver
       run: |
