@@ -14,14 +14,11 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y bc build-essential libelf-dev bison flex libssl-dev libcrypto++-dev git curl openssl
 
+
     - name: Download Google Clang Toolchain
-      run: |
-        mkdir -p $GITHUB_WORKSPACE/clang
-        cd $GITHUB_WORKSPACE/clang
-        # Скачиваем проверенную и стабильную версию Clang r450784d
-        wget https://googlesource.com
-        tar -xf clang-r450784d.tar.gz
-        rm clang-r450784d.tar.gz
+      uses: upw0rd/setup-clang-android@master
+      with:
+        clang-version: r450784d
         
 
     - name: Integrate RTL88x2BU Driver
