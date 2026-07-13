@@ -12,7 +12,7 @@ jobs:
     - name: Install Build Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y bc build-essential libelf-dev bison flex libssl-dev libcrypto++-dev git curll openssl
+        sudo apt-get install -y bc build-essential libelf-dev bison flex libssl-dev libcrypto++-dev git curl openssl
 
     - name: Download Google Clang Toolchain
       run: |
