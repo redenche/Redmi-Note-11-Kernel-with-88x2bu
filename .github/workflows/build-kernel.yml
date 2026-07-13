@@ -1,1 +1,73 @@
+name: Build NetHunter Kernel with RTL88x2BU
+on:
+  workflow_dispatch: # Позволяет запускать сборку вручную кнопкой
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Kernel Source
+      uses: actions/checkout@v4
+
+    - name: Install Build Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y bc build-essential libelf-dev bison flex libssl-dev libcrypto++-dev git curll openssl
+
+    - name: Download Google Clang Toolchain
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/clang
+        cd $GITHUB_WORKSPACE/clang
+        # Скачиваем стабильный компилятор Google Clang
+        curl -LO https://googlesource.com
+        tar -xf clang-r487747c.tar.gz
+        rm clang-r487747c.tar.gz
+
+    - name: Integrate RTL88x2BU Driver
+      run: |
+        # Клонируем драйвер во временную папку
+        git clone https://github.com $GITHUB_WORKSPACE/rtl88x2bu
+        # Копируем исходники драйвера в дерево беспроводных сетей ядра
+        mkdir -p drivers/net/wireless/realtek/rtl88x2bu
+        cp -r $GITHUB_WORKSPACE/rtl88x2bu/* drivers/net/wireless/realtek/rtl88x2bu/
+        
+        # Прописываем драйвер в Makefile и Kconfig ядра, чтобы компилятор его увидел
+        echo "obj-\$(CONFIG_RTL8822BU) += rtl88x2bu/" >> drivers/net/wireless/realtek/Makefile
+        echo 'source "drivers/net/wireless/realtek/rtl88x2bu/Kconfig"' >> drivers/net/wireless/realtek/Kconfig
+        
+        # Принудительно включаем драйвер в конфигурации ядра вашего Redmi Note 11
+        echo "CONFIG_RTL8822BU=y" >> arch/arm64/configs/spes-perf_defconfig
+
+    - name: Build Kernel
+      run: |
+        export PATH="$GITHUB_WORKSPACE/clang/bin:$PATH"
+        export ARCH=arm64
+        export SUBARCH=arm64
+        export CROSS_COMPILE=aarch64-linux-gnu-
+        export CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+        
+        # Сборка конфигурации
+        make O=out spes-perf_defconfig
+        
+        # Запуск компиляции на всех доступных ядрах процессора сервера
+        make -j$(nproc --all) O=out \
+          CC=clang \
+          CLANG_TRIPLE=aarch64-linux-gnu-
+
+    - name: Package with AnyKernel3
+      run: |
+        git clone https://github.com $GITHUB_WORKSPACE/AnyKernel3
+        # Копируем скомпилированное ядро (Image.gz) в папку упаковщика
+        cp out/arch/arm64/boot/Image.gz $GITHUB_WORKSPACE/AnyKernel3/
+        cd $GITHUB_WORKSPACE/AnyKernel3
+        # Настраиваем AnyKernel под spes (архитектура arm64)
+        sed -i 's/do.devicecheck=1/do.devicecheck=0/g' anykernel.sh
+        # Архивируем в flashable zip
+        zip -r9 $GITHUB_WORKSPACE/NetHunter-Kernel-Spes.zip *
+
+    - name: Upload Kernel Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: NetHunter-Kernel-RTL88x2BU
+        path: NetHunter-Kernel-Spes.zip
+        
