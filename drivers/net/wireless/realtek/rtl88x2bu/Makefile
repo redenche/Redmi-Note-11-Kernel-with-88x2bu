@@ -153,7 +153,7 @@ CONFIG_RTW_UP_MAPPING_RULE = tos
 CONFIG_RTW_MBO = n
 ########################## Android ###########################
 # CONFIG_RTW_ANDROID - 0: no Android, 4/5/6/7/8/9/10/11 : Android version
-CONFIG_RTW_ANDROID = 0
+CONFIG_RTW_ANDROID = 11
 
 ifeq ($(shell test $(CONFIG_RTW_ANDROID) -gt 0; echo $$?), 0)
 ccflags-y += -DCONFIG_RTW_ANDROID=$(CONFIG_RTW_ANDROID)
@@ -196,7 +196,8 @@ CONFIG_LAYER2_ROAMING = y
 #bit0: ROAM_ON_EXPIRED, #bit1: ROAM_ON_RESUME, #bit2: ROAM_ACTIVE
 CONFIG_ROAMING_FLAG = 0x3
 ###################### Platform Related #######################
-CONFIG_PLATFORM_AUTODETECT = y
+CONFIG_PLATFORM_AUTODETECT = n
+CONFIG_PLATFORM_ARM64_ANDROID = y
 CONFIG_PLATFORM_I386_PC = n
 CONFIG_PLATFORM_ANDROID_X86 = n
 CONFIG_PLATFORM_ANDROID_INTEL_X86 = n
@@ -1412,6 +1413,12 @@ STAGINGMODDIR := /lib/modules/$(KVER)/kernel/drivers/staging
 # End of Platform Specific Flags
 endif
 # *** End AUTODETECT ***
+
+ifeq ($(CONFIG_PLATFORM_ARM64_ANDROID), y)
+EXTRA_CFLAGS += -DCONFIG_LITTLE_ENDIAN
+EXTRA_CFLAGS += -DCONFIG_IOCTL_CFG80211 -DRTW_USE_CFG80211_STA_EVENT
+endif
+
 
 ifeq ($(CONFIG_PLATFORM_I386_PC), y)
 ccflags-y += -DCONFIG_LITTLE_ENDIAN
